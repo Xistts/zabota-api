@@ -47,3 +47,9 @@ jobs:
             docker compose pull
             docker compose up -d
             docker image prune -f
+            set -eux
+            whoami
+            hostname
+            docker --version
+            docker compose version
+            ls -la /srv/zabota
