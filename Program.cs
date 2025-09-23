@@ -43,7 +43,7 @@ app.UseSwaggerUI();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDb>();
-    await db.Database.EnsureCreatedAsync();
+    await db.Database.MigrateAsync();   // применит Migrations/Init и все следующие
 }
 
 // ---- Endpoints ----
