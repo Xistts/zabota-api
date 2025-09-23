@@ -24,8 +24,8 @@ jobs:
       - name: Build & Push image
         uses: docker/build-push-action@v6
         with:
-          context: ./api                 # <── ВАЖНО: папка с проектом
-          dockerfile: ./api/Dockerfile   # <── ВАЖНО: путь к Dockerfile
+          context: .                # <── ВАЖНО: папка с проектом
+          dockerfile: ./Dockerfile   # <── ВАЖНО: путь к Dockerfile
           push: true
           platforms: linux/amd64         # <── под сервер (amd64)
           tags: ghcr.io/xistts/zabota-api:latest
