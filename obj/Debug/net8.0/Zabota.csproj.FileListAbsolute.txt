@@ -213,3 +213,9 @@ F:\zabota-api\obj\Debug\net8.0\refint\Zabota.dll
 F:\zabota-api\obj\Debug\net8.0\Zabota.pdb
 F:\zabota-api\obj\Debug\net8.0\Zabota.genruntimeconfig.cache
 F:\zabota-api\obj\Debug\net8.0\ref\Zabota.dll
+F:\zabota-api\bin\Debug\net8.0\Microsoft.Extensions.Caching.Memory.dll
+F:\zabota-api\bin\Debug\net8.0\Microsoft.Extensions.DependencyInjection.dll
+F:\zabota-api\bin\Debug\net8.0\Microsoft.Extensions.DependencyInjection.Abstractions.dll
+F:\zabota-api\bin\Debug\net8.0\Microsoft.Extensions.Logging.dll
+F:\zabota-api\bin\Debug\net8.0\Microsoft.Extensions.Logging.Abstractions.dll
+F:\zabota-api\bin\Debug\net8.0\Microsoft.Extensions.Options.dll
