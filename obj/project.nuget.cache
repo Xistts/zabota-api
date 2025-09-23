@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "Aoy9jxt/pqQ=",
+  "dgSpecHash": "wRl/5EZ2AWU=",
   "success": true,
-  "projectFilePath": "C:\\Users\\Rusla\\Zabota\\Zabota.csproj",
+  "projectFilePath": "F:\\zabota-api\\Zabota.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Rusla\\.nuget\\packages\\bcrypt.net-next\\4.0.3\\bcrypt.net-next.4.0.3.nupkg.sha512",
     "C:\\Users\\Rusla\\.nuget\\packages\\humanizer.core\\2.14.1\\humanizer.core.2.14.1.nupkg.sha512",

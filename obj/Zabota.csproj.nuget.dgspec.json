@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Rusla\\Zabota\\Zabota.csproj": {}
+    "F:\\zabota-api\\Zabota.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Rusla\\Zabota\\Zabota.csproj": {
+    "F:\\zabota-api\\Zabota.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Rusla\\Zabota\\Zabota.csproj",
+        "projectUniqueName": "F:\\zabota-api\\Zabota.csproj",
         "projectName": "Zabota",
-        "projectPath": "C:\\Users\\Rusla\\Zabota\\Zabota.csproj",
+        "projectPath": "F:\\zabota-api\\Zabota.csproj",
         "packagesPath": "C:\\Users\\Rusla\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Rusla\\Zabota\\obj\\",
+        "outputPath": "F:\\zabota-api\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

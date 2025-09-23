@@ -18,11 +18,13 @@ builder.Services.ConfigureHttpJsonOptions(o =>
 });
 // ---- DB connection string (shows runtime host/port for clarity) ----
 var cs = builder.Configuration.GetConnectionString("DefaultConnection")!;
-Console.WriteLine($"[DB conn] {cs}");
+if (builder.Environment.IsDevelopment() && Environment.GetEnvironmentVariable("USE_TUNNEL") == "1")
+{
+    var b = new Npgsql.NpgsqlConnectionStringBuilder(cs) { Host = "127.0.0.1", Port = 5433 };
+    cs = b.ToString();
+}
 builder.Services.AddDbContext<AppDb>(opt => opt.UseNpgsql(cs));
 
-
-Console.WriteLine($"[DB at runtime] {csb.Host}:{csb.Port} / {csb.Database} / user={csb.Username}");
 
 // ---- Services ----
 builder.Services.AddDbContext<AppDb>(opt =>
