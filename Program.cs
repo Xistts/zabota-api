@@ -18,12 +18,10 @@ builder.Services.ConfigureHttpJsonOptions(o =>
 });
 // ---- DB connection string (shows runtime host/port for clarity) ----
 var cs = builder.Configuration.GetConnectionString("DefaultConnection")!;
-var csb = new NpgsqlConnectionStringBuilder(cs)
-{
-    // пример: меняем параметры под SSH-туннель
-    Host = "localhost",
-    Port = 5433
-};
+Console.WriteLine($"[DB conn] {cs}");
+builder.Services.AddDbContext<AppDb>(opt => opt.UseNpgsql(cs));
+
+
 Console.WriteLine($"[DB at runtime] {csb.Host}:{csb.Port} / {csb.Database} / user={csb.Username}");
 
 // ---- Services ----
