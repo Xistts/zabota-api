@@ -8,7 +8,7 @@
       "applicationUrl": "http://localhost:5113",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "ConnectionStrings__DefaultConnection": "Host=127.0.0.1;Port=5432;Database=zabota;Username=admin;Password=SMpjGtM2x"
+        "ConnectionStrings__DefaultConnection": "Host=127.0.0.1;Port=5432;Database=zabota;Username=admin;Password=00SMp-jGtM2x"
       },
     },
     "https": {
@@ -18,7 +18,7 @@
       "applicationUrl": "https://localhost:7236;http://localhost:5113",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
-        "ConnectionStrings__DefaultConnection": "Host=127.0.0.1;Port=5432;Database=zabota;Username=admin;Password=SMpjGtM2x"
+        "ConnectionStrings__DefaultConnection": "Host=127.0.0.1;Port=5432;Database=zabota;Username=admin;Password=00SMp-jGtM2x"
       }
     }
   }
