@@ -47,6 +47,7 @@ using (var scope = app.Services.CreateScope())
 }
 
 // ---- Endpoints ----
+app.UsePathBase("/api");
 app.MapAuthEndpoints();
 app.MapUserEndpoints(); 
 
