@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "F:\\zabota-api\\Zabota.csproj": {}
+    "C:\\Users\\Rusla\\Zabota\\Zabota.csproj": {}
   },
   "projects": {
-    "F:\\zabota-api\\Zabota.csproj": {
+    "C:\\Users\\Rusla\\Zabota\\Zabota.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "F:\\zabota-api\\Zabota.csproj",
+        "projectUniqueName": "C:\\Users\\Rusla\\Zabota\\Zabota.csproj",
         "projectName": "Zabota",
-        "projectPath": "F:\\zabota-api\\Zabota.csproj",
+        "projectPath": "C:\\Users\\Rusla\\Zabota\\Zabota.csproj",
         "packagesPath": "C:\\Users\\Rusla\\.nuget\\packages\\",
-        "outputPath": "F:\\zabota-api\\obj\\",
+        "outputPath": "C:\\Users\\Rusla\\Zabota\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -56,27 +56,17 @@
             },
             "Microsoft.EntityFrameworkCore": {
               "target": "Package",
-              "version": "[8.0.11, )"
+              "version": "[8.0.7, )"
             },
             "Microsoft.EntityFrameworkCore.Design": {
               "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
               "suppressParent": "All",
               "target": "Package",
-              "version": "[8.0.11, )"
-            },
-            "Microsoft.EntityFrameworkCore.Relational": {
-              "target": "Package",
-              "version": "[8.0.11, )"
-            },
-            "Microsoft.EntityFrameworkCore.Tools": {
-              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
-              "suppressParent": "All",
-              "target": "Package",
-              "version": "[8.0.11, )"
+              "version": "[8.0.7, )"
             },
             "Npgsql.EntityFrameworkCore.PostgreSQL": {
               "target": "Package",
-              "version": "[8.*, )"
+              "version": "[8.0.4, )"
             },
             "Swashbuckle.AspNetCore": {
               "target": "Package",

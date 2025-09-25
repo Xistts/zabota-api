@@ -8,6 +8,7 @@ using Zabota.Endpoints;
 using Zabota.Models;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddScoped<FamilyService>();
 builder.Services.ConfigureHttpJsonOptions(o =>
 {
     // enum → русские строки
@@ -17,13 +18,13 @@ builder.Services.ConfigureHttpJsonOptions(o =>
 });
 // ---- DB connection string (shows runtime host/port for clarity) ----
 var cs = builder.Configuration.GetConnectionString("DefaultConnection")!;
-if (builder.Environment.IsDevelopment() && Environment.GetEnvironmentVariable("USE_TUNNEL") == "1")
+var csb = new NpgsqlConnectionStringBuilder(cs)
 {
-    var b = new Npgsql.NpgsqlConnectionStringBuilder(cs) { Host = "127.0.0.1", Port = 5433 };
-    cs = b.ToString();
-}
-builder.Services.AddDbContext<AppDb>(opt => opt.UseNpgsql(cs));
-
+    // пример: меняем параметры под SSH-туннель
+    Host = "localhost",
+    Port = 5433
+};
+Console.WriteLine($"[DB at runtime] {csb.Host}:{csb.Port} / {csb.Database} / user={csb.Username}");
 
 // ---- Services ----
 builder.Services.AddDbContext<AppDb>(opt =>
@@ -42,12 +43,11 @@ app.UseSwaggerUI();
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDb>();
-    await db.Database.MigrateAsync();   // применит Migrations/Init и все следующие
+    await db.Database.MigrateAsync();
 }
 
 // ---- Endpoints ----
-app.UsePathBase("/api");
 app.MapAuthEndpoints();
 app.MapUserEndpoints(); 
-
+app.MapFamiliesEndpoints();
 app.Run();

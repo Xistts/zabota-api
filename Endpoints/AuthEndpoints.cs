@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using BCrypt.Net;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Zabota.Contracts;
@@ -13,110 +14,137 @@ public static class AuthEndpoints
     {
         var group = app.MapGroup("/Auth");
 
-        // POST /Auth/Registration
+        // ========== POST /Auth/Registration ==========
         group.MapPost("/Registration", async (
-            [FromBody] RegisterRequest? req,
-            AppDb db,
-            ILoggerFactory lf) =>
+    [FromBody] RegisterRequest req,
+    AppDb db) =>
+{
+    var roleStr = string.IsNullOrWhiteSpace(req.Role) ? null : req.Role!.Trim();
+    // 1) Базовая валидация обязательных полей
+    if (string.IsNullOrWhiteSpace(req.LastName) ||
+        string.IsNullOrWhiteSpace(req.FirstName) ||
+        string.IsNullOrWhiteSpace(req.Login) ||
+        string.IsNullOrWhiteSpace(req.Password))
+    {
+        return Results.BadRequest(new ProblemDetails { Title = "Фамилия, имя, логин и пароль обязательны." });
+    }
+
+    var login = req.Login.Trim();
+    var lastName = req.LastName.Trim();
+    var firstName = req.FirstName.Trim();
+    var middleName = string.IsNullOrWhiteSpace(req.MiddleName) ? null : req.MiddleName!.Trim();
+    var email = string.IsNullOrWhiteSpace(req.Email) ? null : req.Email!.Trim().ToLowerInvariant();
+    var phone = string.IsNullOrWhiteSpace(req.Phone) ? null : req.Phone!.Trim();
+    var role = string.IsNullOrWhiteSpace(req.Role) ? null : req.Role!.Trim();
+
+    // 2) Валидация логина и пароля
+    // Логин: 3–32 символа, латиница/цифры/._-
+    if (login.Length is < 3 or > 32 || !System.Text.RegularExpressions.Regex.IsMatch(login, "^[a-zA-Z0-9._-]+$"))
+        return Results.BadRequest(new ProblemDetails { Title = "Логин должен быть 3–32 символа, латиница/цифры/._-" });
+
+    if (req.Password.Length < 8 || req.Password.Length > 128)
+        return Results.BadRequest(new ProblemDetails { Title = "Пароль должен быть 8–128 символов." });
+
+    // Email: если задан — формат
+    if (email is not null && !new EmailAddressAttribute().IsValid(email))
+        return Results.BadRequest(new ProblemDetails { Title = "Некорректный формат email." });
+
+    // Телефон (упрощённая проверка, при желании ужесточите)
+    if (phone is not null && !System.Text.RegularExpressions.Regex.IsMatch(phone, @"^[0-9+\-\s()]{6,20}$"))
+        return Results.BadRequest(new ProblemDetails { Title = "Некорректный формат телефона." });
+
+    // Дата рождения — не в будущем и реалистичная
+    DateOnly? birthDate = req.BirthDate;
+    if (birthDate is not null)
+    {
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        if (birthDate > today || birthDate < new DateOnly(1900, 1, 1))
+            return Results.BadRequest(new ProblemDetails { Title = "Некорректная дата рождения." });
+    }
+
+    // 3) Уникальность логина и email
+    if (await db.Users.AnyAsync(u => u.Login == login))
+        return Results.Conflict(new ProblemDetails { Title = "Такой логин уже занят." });
+
+    if (email is not null)
+    {
+        var emailExists = await db.Users.AnyAsync(u => u.Email == email);
+        if (emailExists)
+            return Results.Conflict(new ProblemDetails { Title = "Такой email уже зарегистрирован." });
+    }
+
+    // 4) Хеш пароля
+    var passwordHash = BCrypt.Net.BCrypt.HashPassword(req.Password);
+FamilyRole? roleEnum = null;
+if (!string.IsNullOrEmpty(roleStr))
+{
+    if (FamilyRoleRu.TryParseRussian(roleStr, out var parsed))
+        roleEnum = parsed;
+    else
+        return Results.BadRequest(new ProblemDetails { Title = $"Неизвестная роль: '{roleStr}'." });
+}
+    // 5) Создание пользователя
+    var user = new User
+    {
+        Login = login,
+        PasswordHash = passwordHash,
+        Email = email,
+        Phone = phone,
+        LastName = lastName,
+        FirstName = firstName,
+        MiddleName = middleName,
+        DateOfBirth = birthDate,
+        Role = role,
+        IsActive = true,
+        IsVerified = false,
+        CreatedAtUtc = DateTime.UtcNow
+    };
+
+    db.Users.Add(user);
+    await db.SaveChangesAsync();
+
+    // 6) Ответ
+    var response = new RegisterResponse
+    {
+        Id = user.Id,
+        Login = user.Login,
+        Email = user.Email ?? string.Empty,
+        FirstName = user.FirstName,
+        LastName = user.LastName,
+        MiddleName = user.MiddleName,
+        Phone = user.Phone,
+        BirthDate = user.DateOfBirth,
+        Role = user.Role,
+        IsVerified = user.IsVerified,
+        Message = "Пользователь создан."
+    };
+
+    return Results.Created($"/users/{user.Id}", response);
+})
+.WithName("AuthRegistration")
+.Produces<RegisterResponse>(StatusCodes.Status201Created)
+.ProducesProblem(StatusCodes.Status400BadRequest)
+.ProducesProblem(StatusCodes.Status409Conflict);
+
+        // ========== POST /Auth/Login ==========
+        group.MapPost("/Login", async ([FromBody] LoginRequest req, AppDb db) =>
         {
-            var log = lf.CreateLogger("Auth.Registration");
-
-            if (req is null)
-                return Results.BadRequest(new ProblemDetails { Title = "Пустое тело запроса." });
-
             if (string.IsNullOrWhiteSpace(req.Email) || string.IsNullOrWhiteSpace(req.Password))
-                return Results.BadRequest(new ProblemDetails { Title = "Email и пароль обязательны." });
-
-            var email = req.Email.Trim().ToLowerInvariant();
-
-            if (!new EmailAddressAttribute().IsValid(email))
-                return Results.BadRequest(new ProblemDetails { Title = "Некорректный формат email." });
-
-            if (req.Password.Length is < 8 or > 128)
-                return Results.BadRequest(new ProblemDetails { Title = "Пароль должен быть 8–128 символов." });
-
-            try
-            {
-                // уникальность (и всё равно ловим 23505 на всякий случай)
-                var exists = await db.Users.AsNoTracking().AnyAsync(u => u.Email == email);
-                if (exists)
-                    return Results.Conflict(new ProblemDetails { Title = "Такой email уже зарегистрирован." });
-
-                var passwordHash = BCrypt.Net.BCrypt.HashPassword(req.Password);
-
-                var user = new User
-                {
-                    Email = email,
-                    PasswordHash = passwordHash,
-                    IsActive = true,
-                    IsVerified = false,
-                    CreatedAtUtc = DateTime.UtcNow
-                };
-
-                db.Users.Add(user);
-                await db.SaveChangesAsync();
-
-                return Results.Created($"/users/{user.Id}", new RegisterResponse
-                {
-                    Id = user.Id,
-                    Email = user.Email,
-                    IsVerified = user.IsVerified,
-                    Message = "Пользователь создан."
-                });
-            }
-            catch (DbUpdateException ex) when (ex.InnerException is Npgsql.PostgresException pg && pg.SqlState == "23505")
-            {
-                // уникальный индекс (на случай гонки)
-                return Results.Conflict(new ProblemDetails { Title = "Email уже занят." });
-            }
-            catch (Exception ex)
-            {
-                log.LogError(ex, "Registration failed");
-                return Results.Problem(title: "Внутренняя ошибка", statusCode: 500);
-            }
-        })
-        .WithName("AuthRegistration")
-        .Produces<RegisterResponse>(StatusCodes.Status201Created)
-        .ProducesProblem(StatusCodes.Status400BadRequest)
-        .ProducesProblem(StatusCodes.Status409Conflict)
-        .ProducesProblem(StatusCodes.Status500InternalServerError);
-
-        // POST /Auth/Login
-        group.MapPost("/Login", async ([FromBody] LoginRequest? req, AppDb db, ILoggerFactory lf) =>
-        {
-            var log = lf.CreateLogger("Auth.Login");
-
-            if (req is null || string.IsNullOrWhiteSpace(req.Email) || string.IsNullOrWhiteSpace(req.Password))
                 return Results.Ok(new LoginResponse { Code = 3, Message = "Email и пароль обязательны." });
 
             var email = req.Email.Trim().ToLowerInvariant();
+            var user = await db.Users.SingleOrDefaultAsync(u => u.Email == email);
 
-            try
-            {
-                var user = await db.Users.SingleOrDefaultAsync(u => u.Email == email);
-                if (user is null)
-                    return Results.Ok(new LoginResponse { Code = 1, Message = "Пользователь не найден." });
+            if (user is null)
+                return Results.Ok(new LoginResponse { Code = 1, Message = "Пользователь не найден." });
 
-                if (!BCrypt.Net.BCrypt.Verify(req.Password, user.PasswordHash))
-                    return Results.Ok(new LoginResponse { Code = 2, Message = "Неверный пароль." });
+            if (!BCrypt.Net.BCrypt.Verify(req.Password, user.PasswordHash))
+                return Results.Ok(new LoginResponse { Code = 2, Message = "Неверный пароль." });
 
-                return Results.Ok(new LoginResponse { Code = 0, Message = "Успешный вход.", Id = user.Id });
-            }
-            catch (InvalidOperationException ex)
-            {
-                // на случай, если в базе оказались дубликаты email
-                log.LogError(ex, "Multiple users with same email {Email}", email);
-                return Results.Problem(title: "Дубликаты email в базе", statusCode: 500);
-            }
-            catch (Exception ex)
-            {
-                log.LogError(ex, "Login failed");
-                return Results.Problem(title: "Внутренняя ошибка", statusCode: 500);
-            }
+            return Results.Ok(new LoginResponse { Code = 0, Message = "Успешный вход.", Id = user.Id });
         })
         .WithName("AuthLogin")
-        .Produces<LoginResponse>(StatusCodes.Status200OK)
-        .ProducesProblem(StatusCodes.Status500InternalServerError);
+        .Produces<LoginResponse>(StatusCodes.Status200OK);
 
         return app;
     }

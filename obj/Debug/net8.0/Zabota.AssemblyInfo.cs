@@ -10,11 +10,10 @@
 using System;
 using System.Reflection;
 
-[assembly: Microsoft.Extensions.Configuration.UserSecrets.UserSecretsIdAttribute("d6e77cae-f85b-4868-9819-a6ef9722f166")]
 [assembly: System.Reflection.AssemblyCompanyAttribute("Zabota")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+ee692050265a79f84db34e1d3a18ad721c131b69")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
 [assembly: System.Reflection.AssemblyProductAttribute("Zabota")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Zabota")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

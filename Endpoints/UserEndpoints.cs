@@ -15,18 +15,23 @@ public static class UserEndpoints
         // POST /Users/Info — обновить роль/дату рождения
 group.MapPost("/Info", async ([FromBody] UpdateUserRoleRequest req, AppDb db) =>
 {
-    if (req.UserId <= 0)
+    if (req.UserId == Guid.Empty)
         return Results.BadRequest(new { Message = "Некорректный UserId" });
 
     var user = await db.Users.FindAsync(req.UserId);
     if (user is null)
         return Results.NotFound(new { Message = "Пользователь не найден" });
 
-    if (req.DateOfBirth is { } dob && dob > DateTime.UtcNow.Date)
-        return Results.BadRequest(new { Message = "Дата рождения не может быть в будущем" });
+    if (req.DateOfBirth is { } dob)
+    {
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        if (dob > today)
+            return Results.BadRequest(new { Message = "Дата рождения не может быть в будущем" });
+        user.DateOfBirth = dob;
+    }
 
-    if (req.Role is not null)       user.Role = req.Role;
-    if (req.DateOfBirth is not null) user.DateOfBirth = req.DateOfBirth!.Value.Date;
+    if (!string.IsNullOrWhiteSpace(req.Role))
+        user.Role = req.Role!.Trim();
 
     await db.SaveChangesAsync();
 
@@ -34,9 +39,8 @@ group.MapPost("/Info", async ([FromBody] UpdateUserRoleRequest req, AppDb db) =>
     {
         user.Id,
         user.Email,
-        user.Role,         // ← сериализуется как "Мама"/"Папа"/...
+        user.Role,        // будет сериализовано конвертером как «Мама»/«Папа»/...
         user.DateOfBirth,
-        // Age = user.DateOfBirth is null ? null : CalculateAge(user.DateOfBirth.Value),
         Message = "Данные пользователя обновлены"
     });
 });
@@ -63,3 +67,4 @@ group.MapGet("/Roles", () =>
         return age;
     }
 }
+
