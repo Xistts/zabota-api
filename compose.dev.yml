@@ -1,0 +1,13 @@
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: zabota_app
+      POSTGRES_PASSWORD: devpass
+      POSTGRES_DB: zabota
+    ports:
+      - "5433:5432" # локально слушаем 5433, чтобы не конфликтовать
+    volumes:
+      - pgdata_dev:/var/lib/postgresql/data
+volumes:
+  pgdata_dev:

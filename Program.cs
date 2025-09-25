@@ -8,7 +8,6 @@ using Zabota.Endpoints;
 using Zabota.Models;
 
 var builder = WebApplication.CreateBuilder(args);
-
 builder.Services.ConfigureHttpJsonOptions(o =>
 {
     // enum → русские строки
