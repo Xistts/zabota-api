@@ -19,9 +19,8 @@ public class User
     public Guid Id { get; set; } = Guid.NewGuid();
 
     // Аутентификация
-    [MaxLength(32)] public string Login { get; set; } = default!;
     [MaxLength(200)] public string PasswordHash { get; set; } = default!;
-    [MaxLength(320)] public string? Email { get; set; }
+    [MaxLength(320)] public string? Email { get; set; } = default!;
     [MaxLength(32)] public string? Phone { get; set; }
 
     // Профиль

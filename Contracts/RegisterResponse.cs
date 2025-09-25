@@ -3,8 +3,7 @@ namespace Zabota.Contracts;
 public sealed class RegisterResponse
 {
     public Guid Id { get; set; }
-    public string Login { get; set; } = default!;
-    public string Email { get; set; } = string.Empty;
+    public string Email { get; set; } = default!;
     public string FirstName { get; set; } = default!;
     public string LastName { get; set; } = default!;
     public string? MiddleName { get; set; }

@@ -23,24 +23,20 @@ public static class AuthEndpoints
     // 1) Базовая валидация обязательных полей
     if (string.IsNullOrWhiteSpace(req.LastName) ||
         string.IsNullOrWhiteSpace(req.FirstName) ||
-        string.IsNullOrWhiteSpace(req.Login) ||
+        string.IsNullOrWhiteSpace(req.Email) ||
         string.IsNullOrWhiteSpace(req.Password))
     {
         return Results.BadRequest(new ProblemDetails { Title = "Фамилия, имя, логин и пароль обязательны." });
     }
 
-    var login = req.Login.Trim();
     var lastName = req.LastName.Trim();
     var firstName = req.FirstName.Trim();
     var middleName = string.IsNullOrWhiteSpace(req.MiddleName) ? null : req.MiddleName!.Trim();
-    var email = string.IsNullOrWhiteSpace(req.Email) ? null : req.Email!.Trim().ToLowerInvariant();
+    var email = req.Email!.Trim().ToLowerInvariant();
     var phone = string.IsNullOrWhiteSpace(req.Phone) ? null : req.Phone!.Trim();
     var role = string.IsNullOrWhiteSpace(req.Role) ? null : req.Role!.Trim();
 
     // 2) Валидация логина и пароля
-    // Логин: 3–32 символа, латиница/цифры/._-
-    if (login.Length is < 3 or > 32 || !System.Text.RegularExpressions.Regex.IsMatch(login, "^[a-zA-Z0-9._-]+$"))
-        return Results.BadRequest(new ProblemDetails { Title = "Логин должен быть 3–32 символа, латиница/цифры/._-" });
 
     if (req.Password.Length < 8 || req.Password.Length > 128)
         return Results.BadRequest(new ProblemDetails { Title = "Пароль должен быть 8–128 символов." });
@@ -62,10 +58,7 @@ public static class AuthEndpoints
             return Results.BadRequest(new ProblemDetails { Title = "Некорректная дата рождения." });
     }
 
-    // 3) Уникальность логина и email
-    if (await db.Users.AnyAsync(u => u.Login == login))
-        return Results.Conflict(new ProblemDetails { Title = "Такой логин уже занят." });
-
+    // 3) Уникальность и email
     if (email is not null)
     {
         var emailExists = await db.Users.AnyAsync(u => u.Email == email);
@@ -86,7 +79,6 @@ if (!string.IsNullOrEmpty(roleStr))
     // 5) Создание пользователя
     var user = new User
     {
-        Login = login,
         PasswordHash = passwordHash,
         Email = email,
         Phone = phone,
@@ -107,8 +99,7 @@ if (!string.IsNullOrEmpty(roleStr))
     var response = new RegisterResponse
     {
         Id = user.Id,
-        Login = user.Login,
-        Email = user.Email ?? string.Empty,
+        Email = user.Email,
         FirstName = user.FirstName,
         LastName = user.LastName,
         MiddleName = user.MiddleName,

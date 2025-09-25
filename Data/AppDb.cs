@@ -30,10 +30,6 @@ public class AppDb : DbContext
 #else
                 ;
 #endif
-
-            e.HasIndex(x => x.Login).IsUnique();
-            e.Property(x => x.Login).HasMaxLength(32).IsRequired();
-
             e.HasIndex(x => x.Email).IsUnique();
             e.Property(x => x.Email).HasMaxLength(320).IsRequired(false);
 
