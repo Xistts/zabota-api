@@ -10,9 +10,7 @@ namespace Zabota.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropIndex(
-                name: "IX_Users_Login",
-                table: "Users");
+migrationBuilder.Sql(@"DROP INDEX IF EXISTS ""IX_Users_Login"";");
 
             migrationBuilder.DropColumn(
                 name: "Login",
