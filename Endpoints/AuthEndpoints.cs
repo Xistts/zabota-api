@@ -32,7 +32,7 @@ public static class AuthEndpoints
     var lastName = req.LastName.Trim();
     var firstName = req.FirstName.Trim();
     var middleName = string.IsNullOrWhiteSpace(req.MiddleName) ? null : req.MiddleName!.Trim();
-    var email = req.Email!.Trim().ToLowerInvariant();
+    var email = req.Email.Trim().ToLowerInvariant();
     var phone = string.IsNullOrWhiteSpace(req.Phone) ? null : req.Phone!.Trim();
     var role = string.IsNullOrWhiteSpace(req.Role) ? null : req.Role!.Trim();
 
@@ -42,7 +42,7 @@ public static class AuthEndpoints
         return Results.BadRequest(new ProblemDetails { Title = "Пароль должен быть 8–128 символов." });
 
     // Email: если задан — формат
-    if (email is not null && !new EmailAddressAttribute().IsValid(email))
+    if (!new EmailAddressAttribute().IsValid(email))
         return Results.BadRequest(new ProblemDetails { Title = "Некорректный формат email." });
 
     // Телефон (упрощённая проверка, при желании ужесточите)
