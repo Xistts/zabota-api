@@ -12,8 +12,8 @@ using Zabota.Data;
 namespace Zabota.Migrations
 {
     [DbContext(typeof(AppDb))]
-    [Migration("20250925140709_SyncUsersSchema")]
-    partial class SyncUsersSchema
+    [Migration("20250925153830_Baseline")]
+    partial class Baseline
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
