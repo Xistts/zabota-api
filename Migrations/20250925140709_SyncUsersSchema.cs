@@ -12,9 +12,7 @@ namespace Zabota.Migrations
         {
 migrationBuilder.Sql(@"DROP INDEX IF EXISTS ""IX_Users_Login"";");
 
-            migrationBuilder.DropColumn(
-                name: "Login",
-                table: "Users");
+migrationBuilder.Sql(@"ALTER TABLE ""Users"" DROP COLUMN IF EXISTS ""Login"";");
         }
 
         /// <inheritdoc />
