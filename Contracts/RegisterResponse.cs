@@ -1,6 +1,8 @@
-namespace Zabota.Contracts;
+using Zabota.Contracts;
 
-public sealed class RegisterResponse
+namespace Zabota.Endpoints;
+
+public class RegisterResponse : BaseResponse
 {
     public Guid Id { get; set; }
     public string Email { get; set; } = default!;
@@ -11,5 +13,4 @@ public sealed class RegisterResponse
     public DateOnly? BirthDate { get; set; }
     public string? Role { get; set; }
     public bool IsVerified { get; set; }
-    public string Message { get; set; } = default!;
 }
