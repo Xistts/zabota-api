@@ -86,7 +86,7 @@ var group = app.MapGroup("/families").RequireAuthorization().WithTags("Families"
                 .AnyAsync(x => x.FamilyId == family.Id && x.UserId == req.UserId, ct);
 
             if (alreadyMember)
-                return Results.Conflict(new ProblemDetails { Title = "Пользователь уже является участником семьи." });
+                return Results.BadRequest(new ProblemDetails { Title = "Пользователь уже является участником семьи." });
 
             var member = new FamilyMember
             {
@@ -111,8 +111,7 @@ var group = app.MapGroup("/families").RequireAuthorization().WithTags("Families"
         .WithName("FamiliesJoinByCode")
         .Produces<JoinByCodeResponse>(StatusCodes.Status200OK)
         .ProducesProblem(StatusCodes.Status400BadRequest)
-        .ProducesProblem(StatusCodes.Status404NotFound)
-        .ProducesProblem(StatusCodes.Status409Conflict);
+        .ProducesProblem(StatusCodes.Status404NotFound);
 
         // GET /families/{familyId}/members — список участников
         group.MapGet("/{familyId:guid}/members", async (

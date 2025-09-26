@@ -26,7 +26,7 @@ public static class AuthEndpoints
         string.IsNullOrWhiteSpace(req.Email) ||
         string.IsNullOrWhiteSpace(req.Password))
     {
-        return Results.BadRequest(new ProblemDetails { Title = "Фамилия, имя, логин и пароль обязательны." });
+        return Results.BadRequest(new ProblemDetails { Title = "Фамилия, имя, email и пароль обязательны." });
     }
 
     var lastName = req.LastName.Trim();
@@ -59,23 +59,23 @@ public static class AuthEndpoints
     }
 
     // 3) Уникальность и email
-    if (email is not null)
-    {
+
+    
         var emailExists = await db.Users.AnyAsync(u => u.Email == email);
         if (emailExists)
-            return Results.Conflict(new ProblemDetails { Title = "Такой email уже зарегистрирован." });
-    }
+            return Results.BadRequest(new ProblemDetails { Title = "Пользователь уже зарегистрирован." });
+    
 
     // 4) Хеш пароля
     var passwordHash = BCrypt.Net.BCrypt.HashPassword(req.Password);
-FamilyRole? roleEnum = null;
-if (!string.IsNullOrEmpty(roleStr))
-{
-    if (FamilyRoleRu.TryParseRussian(roleStr, out var parsed))
-        roleEnum = parsed;
-    else
-        return Results.BadRequest(new ProblemDetails { Title = $"Неизвестная роль: '{roleStr}'." });
-}
+    FamilyRole? roleEnum = null;
+    if (!string.IsNullOrEmpty(roleStr))
+    {
+        if (FamilyRoleRu.TryParseRussian(roleStr, out var parsed))
+            roleEnum = parsed;
+        else
+            return Results.BadRequest(new ProblemDetails { Title = $"Неизвестная роль: '{roleStr}'." });
+    }
     // 5) Создание пользователя
     var user = new User
     {
@@ -110,12 +110,11 @@ if (!string.IsNullOrEmpty(roleStr))
         Message = "Пользователь создан."
     };
 
-    return Results.Created($"/users/{user.Id}", response);
+    return Results.Ok(response);
 })
 .WithName("AuthRegistration")
-.Produces<RegisterResponse>(StatusCodes.Status201Created)
-.ProducesProblem(StatusCodes.Status400BadRequest)
-.ProducesProblem(StatusCodes.Status409Conflict);
+.Produces<RegisterResponse>(StatusCodes.Status200OK)
+.ProducesProblem(StatusCodes.Status400BadRequest);
 
         // ========== POST /Auth/Login ==========
         group.MapPost("/Login", async ([FromBody] LoginRequest req, AppDb db) =>
