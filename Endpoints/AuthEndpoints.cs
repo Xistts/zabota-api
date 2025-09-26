@@ -115,20 +115,21 @@ public static class AuthEndpoints
             await db.SaveChangesAsync();
 
             // 6) Ответ 200 + Code = Ok
-            return Results.Ok(new RegisterResponse
-            {
-                Code = (int)ResponseCode.Ok,
-                Description = "Пользователь создан.",
-                Id = user.Id,
-                Email = user.Email,
-                FirstName = user.FirstName,
-                LastName = user.LastName,
-                MiddleName = user.MiddleName,
-                Phone = user.Phone,
-                BirthDate = user.DateOfBirth,
-                Role = user.Role,
-                IsVerified = user.IsVerified
-            });
+return Results.Ok(new RegisterResponse
+{
+    Id = user.Id,
+    Email = user.Email,
+    FirstName = user.FirstName,
+    LastName = user.LastName,
+    MiddleName = user.MiddleName,
+    Phone = user.Phone,
+    BirthDate = user.BirthDate,
+    Role = user.Role,
+    IsVerified = user.IsVerified,
+    Code = (int)ResponseCode.Ok,
+    Description = "Пользователь создан.",
+    RequestId = Guid.NewGuid().ToString()
+});
         })
         .WithName("AuthRegistration")
         .Produces<RegisterResponse>(StatusCodes.Status200OK);

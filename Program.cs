@@ -11,10 +11,15 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddScoped<FamilyService>();
 builder.Services.ConfigureHttpJsonOptions(o =>
 {
-    // enum → русские строки
+    // camelCase: id, firstName, ...
+    o.SerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+
+    // не писать null-поля
+    o.SerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
+
+    // твои конвертеры как были:
     o.SerializerOptions.Converters.Add(new FamilyRoleJsonConverter());
-    // при желании запретить числа для других enum
-    o.SerializerOptions.Converters.Add(new JsonStringEnumConverter(allowIntegerValues: false));
+    o.SerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter(allowIntegerValues: false));
 });
 // ---- DB connection string (shows runtime host/port for clarity) ----
 var cs = builder.Configuration.GetConnectionString("DefaultConnection")!;
