@@ -24,25 +24,24 @@ public static class AuthEndpoints
             }
 
             // 1) Базовая валидация
-            if (string.IsNullOrWhiteSpace(req.LastName))  AddErr(errors, nameof(req.LastName),  "Фамилия обязательна.");
+            if (string.IsNullOrWhiteSpace(req.LastName)) AddErr(errors, nameof(req.LastName), "Фамилия обязательна.");
             if (string.IsNullOrWhiteSpace(req.FirstName)) AddErr(errors, nameof(req.FirstName), "Имя обязательно.");
-            if (string.IsNullOrWhiteSpace(req.Email))     AddErr(errors, nameof(req.Email),     "Email обязателен.");
-            if (string.IsNullOrWhiteSpace(req.Password))  AddErr(errors, nameof(req.Password),  "Пароль обязателен.");
+            if (string.IsNullOrWhiteSpace(req.Email)) AddErr(errors, nameof(req.Email), "Email обязателен.");
+            if (string.IsNullOrWhiteSpace(req.Password)) AddErr(errors, nameof(req.Password), "Пароль обязателен.");
 
             if (errors.Count > 0)
                 return Results.Ok(new RegisterResponse
                 {
-                    Code = ResponseCode.ValidationError,
+                    Code = (int)ResponseCode.ValidationError,
                     Description = "Запрос содержит ошибки.",
-                    Errors = errors
                 });
 
-            var lastName  = req.LastName!.Trim();
+            var lastName = req.LastName!.Trim();
             var firstName = req.FirstName!.Trim();
-            var middle    = string.IsNullOrWhiteSpace(req.MiddleName) ? null : req.MiddleName!.Trim();
-            var email     = req.Email!.Trim().ToLowerInvariant();
-            var phone     = string.IsNullOrWhiteSpace(req.Phone) ? null : req.Phone!.Trim();
-            var roleStr   = string.IsNullOrWhiteSpace(req.Role) ? null : req.Role!.Trim();
+            var middle = string.IsNullOrWhiteSpace(req.MiddleName) ? null : req.MiddleName!.Trim();
+            var email = req.Email!.Trim().ToLowerInvariant();
+            var phone = string.IsNullOrWhiteSpace(req.Phone) ? null : req.Phone!.Trim();
+            var roleStr = string.IsNullOrWhiteSpace(req.Role) ? null : req.Role!.Trim();
 
             // 2) Форматы
             if (req.Password!.Length < 8 || req.Password!.Length > 128)
@@ -65,9 +64,8 @@ public static class AuthEndpoints
             if (errors.Count > 0)
                 return Results.Ok(new RegisterResponse
                 {
-                    Code = ResponseCode.ValidationError,
+                    Code = (int)ResponseCode.ValidationError,
                     Description = "Запрос содержит ошибки.",
-                    Errors = errors
                 });
 
             // 3) Уникальность email
@@ -75,9 +73,8 @@ public static class AuthEndpoints
             if (emailExists)
                 return Results.Ok(new RegisterResponse
                 {
-                    Code = ResponseCode.ValidationError,
+                    Code = (int)ResponseCode.ValidationError,
                     Description = "Пользователь уже зарегистрирован.",
-                    Errors = new() { [nameof(req.Email)] = new() { "Пользователь уже зарегистрирован." } }
                 });
 
             // 4) Роль (если пришла строкой по-русски)
@@ -87,9 +84,8 @@ public static class AuthEndpoints
                 if (!FamilyRoleRu.TryParseRussian(roleStr!, out var parsed))
                     return Results.Ok(new RegisterResponse
                     {
-                        Code = ResponseCode.ValidationError,
+                        Code = (int)ResponseCode.ValidationError,
                         Description = $"Неизвестная роль: '{roleStr}'.",
-                        Errors = new() { [nameof(req.Role)] = new() { "Неизвестная роль." } }
                     });
                 roleEnum = parsed;
             }
@@ -115,21 +111,21 @@ public static class AuthEndpoints
             await db.SaveChangesAsync();
 
             // 6) Ответ 200 + Code = Ok
-return Results.Ok(new RegisterResponse
-{
-    Id = user.Id,
-    Email = user.Email,
-    FirstName = user.FirstName,
-    LastName = user.LastName,
-    MiddleName = user.MiddleName,
-    Phone = user.Phone,
-    BirthDate = user.BirthDate,
-    Role = user.Role,
-    IsVerified = user.IsVerified,
-    Code = (int)ResponseCode.Ok,
-    Description = "Пользователь создан.",
-    RequestId = Guid.NewGuid().ToString()
-});
+            return Results.Ok(new RegisterResponse
+            {
+                Id = user.Id,
+                Email = user.Email,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                MiddleName = user.MiddleName,
+                Phone = user.Phone,
+                BirthDate = user.DateOfBirth,
+                Role = user.Role,
+                IsVerified = user.IsVerified,
+                Code = (int)ResponseCode.Ok,
+                Description = "Пользователь создан.",
+                RequestId = Guid.NewGuid().ToString()
+            });
         })
         .WithName("AuthRegistration")
         .Produces<RegisterResponse>(StatusCodes.Status200OK);
@@ -140,7 +136,7 @@ return Results.Ok(new RegisterResponse
             if (string.IsNullOrWhiteSpace(req.Email) || string.IsNullOrWhiteSpace(req.Password))
                 return Results.Ok(new LoginResponse
                 {
-                    Code = ResponseCode.ValidationError,
+                    Code = (int)ResponseCode.ValidationError,
                     Description = "Email и пароль обязательны.",
                 });
 
@@ -150,14 +146,14 @@ return Results.Ok(new RegisterResponse
             if (user is null)
                 return Results.Ok(new LoginResponse
                 {
-                    Code = ResponseCode.NotFound,
+                    Code = (int)ResponseCode.NotFound,
                     Description = "Пользователь не найден."
                 });
 
             if (!BCrypt.Net.BCrypt.Verify(req.Password, user.PasswordHash))
                 return Results.Ok(new LoginResponse
                 {
-                    Code = ResponseCode.InvalidCredentials,
+                    Code = (int)ResponseCode.InvalidCredentials,
                     Description = "Неверный пароль."
                 });
 
