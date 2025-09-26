@@ -117,7 +117,7 @@ public static class AuthEndpoints
             // 6) Ответ 200 + Code = Ok
             return Results.Ok(new RegisterResponse
             {
-                Code = ResponseCode.Ok,
+                Code = (int)ResponseCode.Ok,
                 Description = "Пользователь создан.",
                 Id = user.Id,
                 Email = user.Email,
@@ -162,7 +162,7 @@ public static class AuthEndpoints
 
             return Results.Ok(new LoginResponse
             {
-                Code = ResponseCode.Ok,
+                Code = (int)ResponseCode.Ok,
                 Description = "Успешный вход.",
                 Id = user.Id
             });

@@ -4,6 +4,7 @@ namespace Zabota.Endpoints;
 
 public class RegisterResponse : BaseResponse
 {
+
     public Guid Id { get; set; }
     public string Email { get; set; } = default!;
     public string FirstName { get; set; } = default!;
@@ -13,4 +14,5 @@ public class RegisterResponse : BaseResponse
     public DateOnly? BirthDate { get; set; }
     public string? Role { get; set; }
     public bool IsVerified { get; set; }
+    
 }
