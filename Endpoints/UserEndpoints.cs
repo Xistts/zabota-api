@@ -47,17 +47,29 @@ group.MapPost("/Info", async ([FromBody] UpdateUserRoleRequest req, AppDb db) =>
 
 
     // GET /Users/Roles — список всех ролей
-group.MapGet("/Roles", () =>
-{
-    var roles = FamilyRoleRu.All()
-        .Select(x => x.Ru); // ["Бабушка","Дедушка","Мама","Папа","Дочь","Сын"]
-    return Results.Ok(roles);
-});
+        group.MapGet("/Roles", () =>
+        {
+            var requestId = Guid.NewGuid().ToString();
+
+            var roles = FamilyRoleRu.All()
+                .Select(x => new RoleItem { Name = x.Ru })
+                .ToList();
+
+            var response = new RolesResponse
+            {
+                RoleList = roles,
+                Code = (int)ResponseCode.Ok,
+                Description = "Список ролей",
+                RequestId = requestId
+            };
+
+            return Results.Ok(response);
+        })
+        .WithName("GetRoles")
+        .Produces<RolesResponse>(StatusCodes.Status200OK);
 
         return app;
     }
-
-
 
     private static int CalculateAge(DateTime dob)
     {
@@ -67,4 +79,3 @@ group.MapGet("/Roles", () =>
         return age;
     }
 }
-
