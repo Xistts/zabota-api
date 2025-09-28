@@ -65,4 +65,5 @@ app.MapAuthEndpoints();
 app.MapControllers();
 app.MapUserEndpoints();
 app.MapFamiliesEndpoints();
+app.MapGet("/ping", () => Results.Ok("ok"));
 app.Run();
