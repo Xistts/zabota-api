@@ -5,7 +5,7 @@ using Zabota.Data;
 namespace Zabota.Endpoints;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/features")]
 public class FeaturesController : ControllerBase
 {
     private readonly AppDb _db;
