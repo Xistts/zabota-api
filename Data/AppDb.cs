@@ -16,6 +16,7 @@ public class AppDb : DbContext
     public DbSet<MedicationDay> MedicationDays => Set<MedicationDay>();
     public DbSet<Family> Families => Set<Family>();
     public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -139,6 +140,18 @@ public class AppDb : DbContext
                 .WithMany(u => u.ChatMessages)
                 .HasForeignKey(x => x.AuthorUserId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<RefreshToken>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Token).HasMaxLength(500).IsRequired();
+            e.HasIndex(x => x.Token).IsUnique();
+            e.HasIndex(x => new { x.UserId, x.ExpiresAtUtc });
+            e.HasOne(x => x.User)
+                .WithMany() // отдельная коллекция не обязательна
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

@@ -1,7 +1,10 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text;
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Npgsql;
 using Zabota.Data;
 using Zabota.Endpoints;
@@ -11,6 +14,36 @@ var builder = WebApplication.CreateBuilder(args);
 
 // ---- Services ----
 builder.Services.AddScoped<FamilyService>();
+
+// JWT
+var jwtSection = builder.Configuration.GetSection("Jwt");
+var jwtKey = jwtSection["Key"]!;
+var issuer = jwtSection["Issuer"];
+var audience = jwtSection["Audience"];
+
+builder
+    .Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(o =>
+    {
+        o.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = issuer,
+            ValidAudience = audience,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+            ClockSkew = TimeSpan.Zero, // без «запасных» 5 минут
+        };
+    });
+
+builder.Services.AddAuthorization(opt =>
+{
+    // Требуем аутентификацию по умолчанию везде
+    opt.FallbackPolicy = new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .Build();
+});
 
 // JSON для минимальных эндпоинтов
 builder.Services.ConfigureHttpJsonOptions(o =>
@@ -48,7 +81,7 @@ builder
 builder.Services.AddDbContext<AppDb>(opt =>
     opt.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
 );
-
+builder.Services.AddScoped<TokenService>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 

@@ -319,3 +319,11 @@ C:\Zabota\zabota-api\obj\Debug\net8.0\scopedcss\bundle\Zabota.styles.css
 C:\Zabota\zabota-api\obj\Debug\net8.0\Zabota.csproj.Up2Date
 C:\Zabota\zabota-api\obj\Debug\net8.0\Zabota.genruntimeconfig.cache
 C:\Zabota\zabota-api\obj\Debug\net8.0\ref\Zabota.dll
+F:\zabota-api\bin\Debug\net8.0\Microsoft.AspNetCore.Authentication.JwtBearer.dll
+F:\zabota-api\bin\Debug\net8.0\Microsoft.IdentityModel.Abstractions.dll
+F:\zabota-api\bin\Debug\net8.0\Microsoft.IdentityModel.JsonWebTokens.dll
+F:\zabota-api\bin\Debug\net8.0\Microsoft.IdentityModel.Logging.dll
+F:\zabota-api\bin\Debug\net8.0\Microsoft.IdentityModel.Protocols.dll
+F:\zabota-api\bin\Debug\net8.0\Microsoft.IdentityModel.Protocols.OpenIdConnect.dll
+F:\zabota-api\bin\Debug\net8.0\Microsoft.IdentityModel.Tokens.dll
+F:\zabota-api\bin\Debug\net8.0\System.IdentityModel.Tokens.Jwt.dll
