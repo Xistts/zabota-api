@@ -1,8 +1,8 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
-using System.Text.Json.Serialization;
 using Zabota.Data;
 using Zabota.Endpoints;
 using Zabota.Models;
@@ -15,25 +15,34 @@ builder.Services.ConfigureHttpJsonOptions(o =>
     o.SerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
 
     // не писать null-поля
-    o.SerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
+    o.SerializerOptions.DefaultIgnoreCondition = System
+        .Text
+        .Json
+        .Serialization
+        .JsonIgnoreCondition
+        .WhenWritingNull;
 
     // твои конвертеры как были:
     o.SerializerOptions.Converters.Add(new FamilyRoleJsonConverter());
-    o.SerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter(allowIntegerValues: false));
+    o.SerializerOptions.Converters.Add(
+        new System.Text.Json.Serialization.JsonStringEnumConverter(allowIntegerValues: false)
+    );
 });
+
 // ---- DB connection string (shows runtime host/port for clarity) ----
 var cs = builder.Configuration.GetConnectionString("DefaultConnection")!;
 var csb = new NpgsqlConnectionStringBuilder(cs)
 {
     // пример: меняем параметры под SSH-туннель
     Host = "localhost",
-    Port = 5433
+    Port = 5433,
 };
 Console.WriteLine($"[DB at runtime] {csb.Host}:{csb.Port} / {csb.Database} / user={csb.Username}");
 
 // ---- Services ----
 builder.Services.AddDbContext<AppDb>(opt =>
-    opt.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+    opt.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
+);
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -53,7 +62,7 @@ using (var scope = app.Services.CreateScope())
 
 // ---- Endpoints ----
 app.MapAuthEndpoints();
-app.MapFeaturesEndpoints();
-app.MapUserEndpoints(); 
+app.MapControllers();
+app.MapUserEndpoints();
 app.MapFamiliesEndpoints();
 app.Run();
