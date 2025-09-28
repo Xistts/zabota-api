@@ -8,38 +8,28 @@ using Zabota.Endpoints;
 using Zabota.Models;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// ---- Services ----
 builder.Services.AddScoped<FamilyService>();
+
+// JSON для минимальных эндпоинтов
 builder.Services.ConfigureHttpJsonOptions(o =>
 {
-    // camelCase: id, firstName, ...
     o.SerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
-
-    // не писать null-поля
     o.SerializerOptions.DefaultIgnoreCondition = System
         .Text
         .Json
         .Serialization
         .JsonIgnoreCondition
         .WhenWritingNull;
-
-    // твои конвертеры как были:
     o.SerializerOptions.Converters.Add(new FamilyRoleJsonConverter());
-    o.SerializerOptions.Converters.Add(
-        new System.Text.Json.Serialization.JsonStringEnumConverter(allowIntegerValues: false)
-    );
+    o.SerializerOptions.Converters.Add(new JsonStringEnumConverter(allowIntegerValues: false));
 });
 
-// ---- DB connection string (shows runtime host/port for clarity) ----
-var cs = builder.Configuration.GetConnectionString("DefaultConnection")!;
-var csb = new NpgsqlConnectionStringBuilder(cs)
-{
-    // пример: меняем параметры под SSH-туннель
-    Host = "localhost",
-    Port = 5433,
-};
-Console.WriteLine($"[DB at runtime] {csb.Host}:{csb.Port} / {csb.Database} / user={csb.Username}");
+// 🔹 ВКЛЮЧАЕМ контроллеры (это как раз то, чего не хватало)
+builder.Services.AddControllers();
 
-// ---- Services ----
+// БД
 builder.Services.AddDbContext<AppDb>(opt =>
     opt.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
 );
@@ -53,17 +43,31 @@ var app = builder.Build();
 app.UseSwagger();
 app.UseSwaggerUI();
 
-// создать БД/таблицы (для демо)
+// 🔹 Health-check до всего — поможет быстро отличить 502 прокси от падения приложения
+app.MapGet("/ping", () => Results.Ok("ok"));
+
+// 🔹 Пробуем миграции, но НЕ валим весь процесс при ошибке
 using (var scope = app.Services.CreateScope())
 {
-    var db = scope.ServiceProvider.GetRequiredService<AppDb>();
-    await db.Database.MigrateAsync();
+    try
+    {
+        var db = scope.ServiceProvider.GetRequiredService<AppDb>();
+        await db.Database.MigrateAsync();
+    }
+    catch (Exception ex)
+    {
+        // Логируем и продолжаем, чтобы хотя бы /ping и статические ендпоинты работали
+        Console.Error.WriteLine($"[MIGRATE] {ex.GetType().Name}: {ex.Message}");
+    }
 }
 
 // ---- Endpoints ----
+// минимальные эндпоинты (как раньше)
 app.MapAuthEndpoints();
-app.MapControllers();
 app.MapUserEndpoints();
 app.MapFamiliesEndpoints();
-app.MapGet("/ping", () => Results.Ok("ok"));
+
+// контроллеры (теперь точно работают, т.к. AddControllers() включён)
+app.MapControllers();
+
 app.Run();
