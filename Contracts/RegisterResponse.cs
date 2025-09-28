@@ -14,7 +14,7 @@ public sealed class RegisterResponse
     public string? Role { get; set; }
     public bool IsVerified { get; set; } // bool пишется всегда
 
-    public int Code { get; set; }                 // ← число
+    public int Code { get; set; } // ← число
     public string Description { get; set; } = ""; // текст описания
-    public string? RequestId { get; set; }        // опционально
+    public string? RequestId { get; set; } // опционально
 }
