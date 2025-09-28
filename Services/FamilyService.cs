@@ -5,7 +5,6 @@ using Zabota.Contracts;
 using Zabota.Data;
 using Zabota.Models;
 
-
 public class FamilyService
 {
     private readonly AppDb _db;
@@ -41,7 +40,7 @@ public class FamilyService
                 {
                     Name = name,
                     InviteCode = code,
-                    CreatedAtUtc = DateTime.UtcNow
+                    CreatedAtUtc = DateTime.UtcNow,
                 };
 
                 _db.Families.Add(family);
