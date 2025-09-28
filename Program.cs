@@ -27,7 +27,22 @@ builder.Services.ConfigureHttpJsonOptions(o =>
 });
 
 // 🔹 ВКЛЮЧАЕМ контроллеры (это как раз то, чего не хватало)
-builder.Services.AddControllers();
+builder
+    .Services.AddControllers()
+    .AddJsonOptions(o =>
+    {
+        o.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+        o.JsonSerializerOptions.DefaultIgnoreCondition = System
+            .Text
+            .Json
+            .Serialization
+            .JsonIgnoreCondition
+            .WhenWritingNull;
+        o.JsonSerializerOptions.Converters.Add(
+            new System.Text.Json.Serialization.JsonStringEnumConverter()
+        );
+        o.JsonSerializerOptions.Converters.Add(new FamilyRoleJsonConverter());
+    });
 
 // БД
 builder.Services.AddDbContext<AppDb>(opt =>
@@ -45,6 +60,25 @@ app.UseSwaggerUI();
 
 // 🔹 Health-check до всего — поможет быстро отличить 502 прокси от падения приложения
 app.MapGet("/ping", () => Results.Ok("ok"));
+app.MapGet(
+    "/_routes",
+    (IEnumerable<EndpointDataSource> sources) =>
+    {
+        var routes = sources
+            .SelectMany(s => s.Endpoints)
+            .OfType<RouteEndpoint>()
+            .Select(e => new
+            {
+                Route = e.RoutePattern.RawText,
+                Method = string.Join(
+                    ',',
+                    e.Metadata.OfType<HttpMethodMetadata>().FirstOrDefault()?.HttpMethods
+                    ?? Array.Empty<string>()
+                ),
+            });
+        return Results.Ok(routes);
+    }
+);
 
 // 🔹 Пробуем миграции, но НЕ валим весь процесс при ошибке
 using (var scope = app.Services.CreateScope())
@@ -62,7 +96,6 @@ using (var scope = app.Services.CreateScope())
 }
 
 // ---- Endpoints ----
-// минимальные эндпоинты (как раньше)
 app.MapAuthEndpoints();
 app.MapUserEndpoints();
 app.MapFamiliesEndpoints();
