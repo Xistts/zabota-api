@@ -3,6 +3,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Zabota.Contracts;
 using Zabota.Data;
 using Zabota.Models;
@@ -29,7 +30,7 @@ public static class AuthEndpoints
                         list.Add(msg);
                     }
 
-                    // 1) Базовая валидация
+                    // базовая валидация
                     if (string.IsNullOrWhiteSpace(req.LastName))
                         AddErr(errors, nameof(req.LastName), "Фамилия обязательна.");
                     if (string.IsNullOrWhiteSpace(req.FirstName))
@@ -40,8 +41,10 @@ public static class AuthEndpoints
                         AddErr(errors, nameof(req.Password), "Пароль обязателен.");
 
                     if (errors.Count > 0)
-                        return Results.BadRequest(
-                            new { Message = "Запрос содержит ошибки.", Errors = errors }
+                        return ResponseUtils.BadResp(
+                            "Запрос содержит ошибки.",
+                            ResponseCode.ValidationError,
+                            errors
                         );
 
                     var lastName = req.LastName!.Trim();
@@ -53,13 +56,11 @@ public static class AuthEndpoints
                     var phone = string.IsNullOrWhiteSpace(req.Phone) ? null : req.Phone!.Trim();
                     var roleStr = string.IsNullOrWhiteSpace(req.Role) ? null : req.Role!.Trim();
 
-                    // 2) Форматы
-                    if (req.Password!.Length < 8 || req.Password!.Length > 128)
+                    // форматы
+                    if (req.Password!.Length is < 8 or > 128)
                         AddErr(errors, nameof(req.Password), "Пароль должен быть 8–128 символов.");
-
                     if (!new EmailAddressAttribute().IsValid(email))
                         AddErr(errors, nameof(req.Email), "Некорректный формат email.");
-
                     if (
                         phone is not null
                         && !System.Text.RegularExpressions.Regex.IsMatch(
@@ -69,36 +70,39 @@ public static class AuthEndpoints
                     )
                         AddErr(errors, nameof(req.Phone), "Некорректный формат телефона.");
 
-                    DateOnly? birthDate = req.BirthDate;
-                    if (birthDate is not null)
+                    if (req.BirthDate is { } birth)
                     {
                         var today = DateOnly.FromDateTime(DateTime.UtcNow);
-                        if (birthDate > today || birthDate < new DateOnly(1900, 1, 1))
+                        if (birth > today || birth < new DateOnly(1900, 1, 1))
                             AddErr(errors, nameof(req.BirthDate), "Некорректная дата рождения.");
                     }
 
                     if (errors.Count > 0)
-                        return Results.BadRequest(
-                            new { Message = "Запрос содержит ошибки.", Errors = errors }
+                        return ResponseUtils.BadResp(
+                            "Запрос содержит ошибки.",
+                            ResponseCode.ValidationError,
+                            errors
                         );
 
-                    // 3) Уникальность email
+                    // уникальность email
                     var emailExists = await db.Users.AnyAsync(u => u.Email == email);
                     if (emailExists)
-                        return Results.Conflict(
-                            new { Message = "Пользователь уже зарегистрирован." }
+                        return ResponseUtils.BadResp(
+                            "Пользователь уже зарегистрирован.",
+                            ResponseCode.Conflict
                         );
 
-                    // 4) Роль (опц.)
+                    // роль (из русской строки, опционально)
                     if (
                         !string.IsNullOrWhiteSpace(roleStr)
                         && !FamilyRoleRu.TryParseRussian(roleStr!, out _)
                     )
-                        return Results.BadRequest(
-                            new { Message = $"Неизвестная роль: '{roleStr}'." }
+                        return ResponseUtils.BadResp(
+                            $"Неизвестная роль: '{roleStr}'.",
+                            ResponseCode.ValidationError
                         );
 
-                    // 5) Создание пользователя
+                    // создание пользователя
                     var passwordHash = BCrypt.Net.BCrypt.HashPassword(req.Password);
                     var user = new User
                     {
@@ -108,7 +112,7 @@ public static class AuthEndpoints
                         LastName = lastName,
                         FirstName = firstName,
                         MiddleName = middle,
-                        DateOfBirth = birthDate,
+                        DateOfBirth = req.BirthDate,
                         Role = roleStr,
                         IsActive = true,
                         IsVerified = false,
@@ -118,39 +122,31 @@ public static class AuthEndpoints
                     db.Users.Add(user);
                     await db.SaveChangesAsync();
 
-                    // 6) Выдача токенов
+                    // токены
                     var (at, atExp) = tokens.CreateAccessToken(user);
-                    var refreshRes = await tokens.IssueRefreshTokenAsync(user);
-                    var rt = refreshRes.token;
-                    var rtExp = refreshRes.expiresAtUtc;
+                    var (rt, rtExp) = await tokens.IssueRefreshTokenAsync(user);
 
-                    var userDto = new RegisterResponse
+                    var data = new AuthData
                     {
-                        Id = user.Id,
-                        Email = user.Email,
-                        FirstName = user.FirstName,
-                        LastName = user.LastName,
-                        MiddleName = user.MiddleName,
-                        Phone = user.Phone,
-                        BirthDate = user.DateOfBirth,
-                        Role = user.Role,
-                        IsVerified = user.IsVerified,
+                        User = new
+                        {
+                            user.Id,
+                            user.Email,
+                            user.FirstName,
+                            user.LastName,
+                            user.MiddleName,
+                            user.Phone,
+                            BirthDate = user.DateOfBirth,
+                            user.Role,
+                            user.IsVerified,
+                        },
+                        Token = at,
+                        TokenExpiresAt = atExp,
+                        RefreshToken = rt,
+                        RefreshTokenExpiresAt = rtExp,
                     };
 
-                    return Results.Created(
-                        $"/users/{user.Id}",
-                        new
-                        {
-                            user = userDto,
-                            tokens = new TokenPairResponse
-                            {
-                                AccessToken = at,
-                                AccessTokenExpiresAtUtc = atExp,
-                                RefreshToken = rt,
-                                RefreshTokenExpiresAtUtc = rtExp,
-                            },
-                        }
-                    );
+                    return ResponseUtils.OkResp(data, "Пользователь создан.");
                 }
             )
             .AllowAnonymous()
@@ -160,44 +156,78 @@ public static class AuthEndpoints
         group
             .MapPost(
                 "/Login",
-                async ([FromBody] LoginRequest req, AppDb db, TokenService tokens) =>
+                async (
+                    [FromBody] LoginRequest req,
+                    AppDb db,
+                    TokenService tokens,
+                    IMemoryCache cache
+                ) =>
                 {
-                    if (
-                        string.IsNullOrWhiteSpace(req.Email)
-                        || string.IsNullOrWhiteSpace(req.Password)
-                    )
-                        return Results.BadRequest(new { Message = "Email и пароль обязательны." });
+                    const int MaxAttempts = 3;
+                    var window = TimeSpan.FromMinutes(10);
 
-                    var email = req.Email.Trim().ToLowerInvariant();
-                    var user = await db.Users.SingleOrDefaultAsync(u => u.Email == email);
+                    var emailRaw = req.Email ?? "";
+                    var email = emailRaw.Trim().ToLowerInvariant();
+                    var cacheKey = $"login:fail:{email}";
 
-                    if (user is null || !BCrypt.Net.BCrypt.Verify(req.Password, user.PasswordHash))
-                        return Results.Unauthorized();
+                    if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(req.Password))
+                        return ResponseUtils.BadResp(
+                            "Неудачная попытка входа. Осталось попыток: 3",
+                            ResponseCode.Error
+                        );
 
-                    var (at, atExp) = tokens.CreateAccessToken(user);
-                    var refreshRes = await tokens.IssueRefreshTokenAsync(user);
-                    var rt = refreshRes.token;
-                    var rtExp = refreshRes.expiresAtUtc;
-
-                    return Results.Ok(
-                        new
+                    var attempts = cache.GetOrCreate(
+                        cacheKey,
+                        e =>
                         {
-                            user = new
-                            {
-                                user.Id,
-                                user.Email,
-                                user.FirstName,
-                                user.LastName,
-                            },
-                            tokens = new TokenPairResponse
-                            {
-                                AccessToken = at,
-                                AccessTokenExpiresAtUtc = atExp,
-                                RefreshToken = rt,
-                                RefreshTokenExpiresAtUtc = rtExp,
-                            },
+                            e.AbsoluteExpirationRelativeToNow = window;
+                            return 0;
                         }
                     );
+
+                    if (attempts >= MaxAttempts)
+                        return ResponseUtils.BadResp(
+                            "Превышено число попыток. Повторите позже.",
+                            ResponseCode.Error
+                        );
+
+                    var user = await db.Users.SingleOrDefaultAsync(u => u.Email == email);
+                    if (user is null || !BCrypt.Net.BCrypt.Verify(req.Password, user.PasswordHash))
+                    {
+                        attempts++;
+                        cache.Set(
+                            cacheKey,
+                            attempts,
+                            new MemoryCacheEntryOptions { AbsoluteExpirationRelativeToNow = window }
+                        );
+                        var remaining = Math.Max(0, MaxAttempts - attempts);
+                        return ResponseUtils.BadResp(
+                            $"Неудачная попытка входа. Осталось попыток: {remaining}",
+                            ResponseCode.Error
+                        );
+                    }
+
+                    cache.Remove(cacheKey);
+
+                    var (at, atExp) = tokens.CreateAccessToken(user);
+                    var (rt, rtExp) = await tokens.IssueRefreshTokenAsync(user);
+
+                    var data = new AuthData
+                    {
+                        User = new
+                        {
+                            user.Id,
+                            user.Email,
+                            user.FirstName,
+                            user.LastName,
+                        },
+                        Token = at,
+                        TokenExpiresAt = atExp,
+                        RefreshToken = rt,
+                        RefreshTokenExpiresAt = rtExp,
+                    };
+
+                    return ResponseUtils.OkResp(data, "Успешная аутентификация");
                 }
             )
             .AllowAnonymous()
@@ -210,34 +240,38 @@ public static class AuthEndpoints
                 async ([FromBody] RefreshRequest req, AppDb db, TokenService tokens) =>
                 {
                     if (string.IsNullOrWhiteSpace(req.RefreshToken))
-                        return Results.BadRequest(new { Message = "RefreshToken обязателен." });
+                        return ResponseUtils.BadResp(
+                            "RefreshToken обязателен.",
+                            ResponseCode.ValidationError
+                        );
 
                     var rt = await db
                         .RefreshTokens.Include(x => x.User)
                         .SingleOrDefaultAsync(x => x.Token == req.RefreshToken);
 
                     if (rt is null || rt.IsRevoked || rt.ExpiresAtUtc <= DateTime.UtcNow)
-                        return Results.Unauthorized();
+                        return ResponseUtils.BadResp(
+                            "Недействительный или просроченный refresh-токен.",
+                            ResponseCode.Error
+                        );
 
-                    // Ротация RT
+                    // ротация
                     rt.RevokedAtUtc = DateTime.UtcNow;
                     await db.SaveChangesAsync();
 
                     var user = rt.User;
                     var (at, atExp) = tokens.CreateAccessToken(user);
-                    var refreshRes = await tokens.IssueRefreshTokenAsync(user);
-                    var newRt = refreshRes.token;
-                    var newRtExp = refreshRes.expiresAtUtc;
+                    var (newRt, newRtExp) = await tokens.IssueRefreshTokenAsync(user);
 
-                    return Results.Ok(
-                        new TokenPairResponse
-                        {
-                            AccessToken = at,
-                            AccessTokenExpiresAtUtc = atExp,
-                            RefreshToken = newRt,
-                            RefreshTokenExpiresAtUtc = newRtExp,
-                        }
-                    );
+                    var data = new
+                    {
+                        Token = at,
+                        TokenExpiresAt = atExp,
+                        RefreshToken = newRt,
+                        RefreshTokenExpiresAt = newRtExp,
+                    };
+
+                    return ResponseUtils.OkResp(data, "Токены обновлены.");
                 }
             )
             .WithName("AuthRefresh");
@@ -250,13 +284,14 @@ public static class AuthEndpoints
                 {
                     var sub = user.FindFirstValue(JwtRegisteredClaimNames.Sub);
                     var email = user.FindFirstValue(JwtRegisteredClaimNames.Email);
-                    return Results.Ok(
+                    return ResponseUtils.OkResp(
                         new
                         {
                             valid = true,
                             userId = sub,
                             email,
-                        }
+                        },
+                        "Токен валиден."
                     );
                 }
             )
@@ -276,20 +311,23 @@ public static class AuthEndpoints
                     if (!string.IsNullOrWhiteSpace(req.RefreshToken))
                     {
                         await tokens.InvalidateRefreshTokenAsync(req.RefreshToken);
-                        return Results.Ok(new { message = "Logged out (refresh token revoked)." });
-                    }
-
-                    var sub = principal.FindFirstValue(JwtRegisteredClaimNames.Sub);
-                    if (Guid.TryParse(sub, out var userId))
-                    {
-                        await tokens.InvalidateAllUserRefreshTokensAsync(userId);
-                        return Results.Ok(
-                            new { message = "Logged out (all refresh tokens revoked)." }
+                        return ResponseUtils.OkResp<object?>(
+                            null,
+                            "Выход выполнен. Refresh-токен отозван."
                         );
                     }
 
-                    return Results.BadRequest(
-                        new { message = "No refresh token provided and user id missing." }
+                    var sub = principal.FindFirstValue(JwtRegisteredClaimNames.Sub);
+                    if (!Guid.TryParse(sub, out var userId))
+                        return ResponseUtils.BadResp(
+                            "Не удалось определить пользователя.",
+                            ResponseCode.ValidationError
+                        );
+
+                    await tokens.InvalidateAllUserRefreshTokensAsync(userId);
+                    return ResponseUtils.OkResp<object?>(
+                        null,
+                        "Выход выполнен. Все refresh-токены пользователя отозваны."
                     );
                 }
             )

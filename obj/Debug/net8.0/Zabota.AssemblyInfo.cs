@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Zabota")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+8f3c906a600e0364afa7f5be0e28017aaac47da4")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+dfe83636ef0da2abec3ec5d2cd65657846128fbd")]
 [assembly: System.Reflection.AssemblyProductAttribute("Zabota")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Zabota")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

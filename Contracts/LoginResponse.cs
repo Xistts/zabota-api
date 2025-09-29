@@ -1,9 +1,13 @@
 namespace Zabota.Contracts;
 
-public class LoginResponse
+public class LoginResponse : BaseResponse
 {
-    public Guid? Id { get; set; }
-    public int Code { get; set; }
-    public string Description { get; set; } = "";
-    public string? RequestId { get; set; }
+    // при успехе
+    public string? Token { get; set; }
+    public DateTime? TokenExpiresAt { get; set; }
+    public string? RefreshToken { get; set; }
+    public DateTime? RefreshTokenExpiresAt { get; set; }
+
+    // заголовок кода (по твоему примеру)
+    public string CodeTitle { get; set; } = "";
 }

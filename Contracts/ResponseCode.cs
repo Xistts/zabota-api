@@ -6,5 +6,6 @@ public enum ResponseCode
     NotFound = 1,
     InvalidCredentials = 2,
     ValidationError = 3,
-    Error = 4
+    Error = 4,
+    Conflict = 5,
 }

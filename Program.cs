@@ -14,6 +14,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // ---- Services ----
 builder.Services.AddScoped<FamilyService>();
+builder.Services.AddMemoryCache();
 
 // JWT
 var jwtSection = builder.Configuration.GetSection("Jwt");
@@ -56,7 +57,7 @@ builder.Services.ConfigureHttpJsonOptions(o =>
         .JsonIgnoreCondition
         .WhenWritingNull;
     o.SerializerOptions.Converters.Add(new FamilyRoleJsonConverter());
-    o.SerializerOptions.Converters.Add(new JsonStringEnumConverter(allowIntegerValues: false));
+    // o.SerializerOptions.Converters.Add(new JsonStringEnumConverter(allowIntegerValues: false));
 });
 
 // 🔹 ВКЛЮЧАЕМ контроллеры (это как раз то, чего не хватало)
