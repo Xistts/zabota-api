@@ -4,6 +4,7 @@ namespace Zabota.Endpoints;
 
 public sealed class RegisterResponse
 {
+    // user
     public Guid? Id { get; set; }
     public string? Email { get; set; }
     public string? FirstName { get; set; }
@@ -12,9 +13,17 @@ public sealed class RegisterResponse
     public string? Phone { get; set; }
     public DateOnly? BirthDate { get; set; }
     public string? Role { get; set; }
-    public bool IsVerified { get; set; } // bool пишется всегда
+    public bool IsVerified { get; set; }
 
-    public int Code { get; set; } // ← число
-    public string Description { get; set; } = ""; // текст описания
-    public string? RequestId { get; set; } // опционально
+    // tokens
+    public string Token { get; set; } = string.Empty;
+    public DateTime TokenExpiresAt { get; set; }
+    public string RefreshToken { get; set; } = string.Empty;
+    public DateTime RefreshTokenExpiresAt { get; set; }
+
+    // meta
+    public int Code { get; set; }          // 0 = Ok
+    public string CodeTitle { get; set; } = "Ok";
+    public string Description { get; set; } = "";
+    public string? RequestId { get; set; }
 }

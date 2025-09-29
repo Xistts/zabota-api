@@ -126,27 +126,32 @@ public static class AuthEndpoints
                     var (at, atExp) = tokens.CreateAccessToken(user);
                     var (rt, rtExp) = await tokens.IssueRefreshTokenAsync(user);
 
-                    var data = new AuthData
+                    var resp = new RegisterResponse
                     {
-                        User = new
-                        {
-                            user.Id,
-                            user.Email,
-                            user.FirstName,
-                            user.LastName,
-                            user.MiddleName,
-                            user.Phone,
-                            BirthDate = user.DateOfBirth,
-                            user.Role,
-                            user.IsVerified,
-                        },
+                        Id = user.Id,
+                        Email = user.Email,
+                        FirstName = user.FirstName,
+                        LastName = user.LastName,
+                        MiddleName = user.MiddleName,
+                        Phone = user.Phone,
+                        // Если у тебя свойство называется иначе — выбери нужное:
+                        BirthDate = user.DateOfBirth, // или user.BirthDate
+                        Role = user.Role,
+                        IsVerified = user.IsVerified,
+
                         Token = at,
                         TokenExpiresAt = atExp,
                         RefreshToken = rt,
                         RefreshTokenExpiresAt = rtExp,
+
+                        Code = 0,
+                        CodeTitle = "Ok",
+                        Description = "Пользователь создан.",
+                        RequestId = ResponseUtils.MakeRequestId(), // или Guid.NewGuid().ToString()
                     };
 
-                    return ResponseUtils.OkResp(data, "Пользователь создан.");
+                    // ВАЖНО: без обёрток, просто 200 ОК с объектом
+                    return Results.Ok(resp);
                 }
             )
             .AllowAnonymous()
